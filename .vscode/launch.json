@@ -1,0 +1,12 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Python: Debug mochiToAnki",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/mochiToAnki.py",
+      "console": "integratedTerminal"
+    }
+  ]
+}
