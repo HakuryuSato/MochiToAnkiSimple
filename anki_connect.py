@@ -133,13 +133,18 @@ def import_to_anki(json_file_path):
             can_add_list = can_add_result.get("result", [])
             filtered_notes = []
             for note_dict, can_add_info in zip(notes_for_anki, can_add_list):
-                # can_add_info = {"canAdd": True/False, "reason": ...}
-                if can_add_info.get("canAdd", False):
-                    # 追加可能なノートのみ残す
-                    filtered_notes.append(note_dict)
+                # can_add_infoが辞書型か確認
+                if isinstance(can_add_info, dict):
+                    if can_add_info.get("canAdd", False):
+                        # 追加可能なノートのみ残す
+                        filtered_notes.append(note_dict)
+                else:
+                    print(f"Unexpected response format for note: {can_add_info}")
 
             if not filtered_notes:
-                print("All notes were recognized as duplicates. Nothing to add.")
+                print(
+                    "All notes were recognized as duplicates or invalid. Nothing to add."
+                )
                 return
 
             # 重複でないノートのみを addNotes
