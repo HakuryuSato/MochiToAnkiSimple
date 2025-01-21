@@ -34,13 +34,9 @@ def ensure_basic_model(model_name: str = DEFAULT_MODEL_NAME):
                 "css": ".card {\n font-family: arial;\n font-size: 20px;\n}\n",
                 "isCloze": False,
                 "cardTemplates": [
-                    {
-                        "Name": "Card 1",
-                        "Front": "{{Front}}",
-                        "Back": "{{Back}}"
-                    }
-                ]
-            }
+                    {"Name": "Card 1", "Front": "{{Front}}", "Back": "{{Back}}"}
+                ],
+            },
         }
         create_response = requests.post(ANKI_CONNECT_URL, json=create_payload).json()
         if create_response.get("error"):
@@ -73,11 +69,11 @@ def ensure_decks_exist(deck_names: set):
             create_payload = {
                 "action": "createDeck",
                 "version": 6,
-                "params": {
-                    "deck": deck_name
-                }
+                "params": {"deck": deck_name},
             }
-            create_response = requests.post(ANKI_CONNECT_URL, json=create_payload).json()
+            create_response = requests.post(
+                ANKI_CONNECT_URL, json=create_payload
+            ).json()
             if create_response.get("error"):
                 print("Error creating deck in Anki:", create_response["error"])
             else:
@@ -89,20 +85,20 @@ def import_to_anki(json_file_path):
     Reads the specified JSON (exported from Mochi Cards),
     and imports the data into Anki via AnkiConnect.
     Each card's 'deck-name' becomes the Anki deck name.
-    'name' is Front, 'content' is Back, as a basic example.
-    """
-    # モデルがなければ作成
-    ensure_basic_model()
+    'name' is Front, 'content' is Back', as a basic example.
 
+    This version:
+    1) 事前にモデル(「Basic」)とデッキを作成済みと仮定
+    2) canAddNotes で重複ノートをスキップ
+    """
+    ANKI_CONNECT_URL = "http://localhost:8765"
+    MODEL_NAME = "Basic"
+
+    # JSON読み込み
     with open(json_file_path, "r", encoding="utf-8") as f:
         mochi_cards = json.load(f)
 
-    # まずは必要なデッキ名を全取得
-    deck_names_needed = set(card.get("deck-name", "Mochi Imported") for card in mochi_cards)
-    # デッキがなければ作成
-    ensure_decks_exist(deck_names_needed)
-
-    # Ankiに追加するノート群を作成
+    # Ankiに追加するノート配列を作成
     notes_for_anki = []
     for card in mochi_cards:
         deck_name = card.get("deck-name", "Mochi Imported")
@@ -110,33 +106,58 @@ def import_to_anki(json_file_path):
         back_text = card.get("content", "")
 
         note = {
-            "deckName": deck_name,    # createDeck で作成済みならエラーにならない
-            "modelName": DEFAULT_MODEL_NAME,
-            "fields": {
-                "Front": front_text,
-                "Back": back_text
-            },
-            "tags": ["mochiImport"]
+            "deckName": deck_name,  # 事前に createDeck などで作成済み
+            "modelName": MODEL_NAME,
+            "fields": {"Front": front_text, "Back": back_text},
+            "tags": ["mochiImport"],
         }
         notes_for_anki.append(note)
 
-    # addNotes リクエスト本体
-    payload = {
-        "action": "addNotes",
+    # まずは「追加可能か」をチェックし、重複するノートを除外する
+    can_add_payload = {
+        "action": "canAddNotes",
         "version": 6,
-        "params": {
-            "notes": notes_for_anki
-        }
+        "params": {"notes": notes_for_anki},
     }
 
-    print("\nSending notes to Anki...")
     try:
-        response = requests.post(ANKI_CONNECT_URL, json=payload)
-        response.raise_for_status()
-        result = response.json()
-        if result.get("error"):
-            print("AnkiConnect error:", result["error"])
+        resp_can_add = requests.post(ANKI_CONNECT_URL, json=can_add_payload)
+        resp_can_add.raise_for_status()
+        can_add_result = resp_can_add.json()
+
+        if can_add_result.get("error"):
+            print("AnkiConnect error (canAddNotes):", can_add_result["error"])
+            return
         else:
-            print("AnkiConnect success:", result["result"])
+            # canAddNotesの結果は、notes_for_anki に対応するリストで返ってくる
+            can_add_list = can_add_result.get("result", [])
+            filtered_notes = []
+            for note_dict, can_add_info in zip(notes_for_anki, can_add_list):
+                # can_add_info = {"canAdd": True/False, "reason": ...}
+                if can_add_info.get("canAdd", False):
+                    # 追加可能なノートのみ残す
+                    filtered_notes.append(note_dict)
+
+            if not filtered_notes:
+                print("All notes were recognized as duplicates. Nothing to add.")
+                return
+
+            # 重複でないノートのみを addNotes
+            add_payload = {
+                "action": "addNotes",
+                "version": 6,
+                "params": {"notes": filtered_notes},
+            }
+
+            print("\nSending notes to Anki...")
+            resp_add = requests.post(ANKI_CONNECT_URL, json=add_payload)
+            resp_add.raise_for_status()
+            add_result = resp_add.json()
+
+            if add_result.get("error"):
+                print("AnkiConnect error (addNotes):", add_result["error"])
+            else:
+                print("AnkiConnect success:", add_result["result"])
+
     except requests.exceptions.RequestException as e:
         print("Failed to send notes to Anki:", e)
