@@ -28,7 +28,7 @@ def main():
         # json_file_name = create_json_filename()
         # write_cards_to_json(json_file_name, decks, all_cards)
 
-        json_file_name = "mochi_cards_full_data_202501212253.json"
+        json_file_name = "mochi_cards_full_data_sample.json"
         # JSONを読み込み、Ankiへインポート
         import_to_anki(json_file_name)
 
