@@ -1,5 +1,6 @@
 """Module for interacting with AnkiConnect."""
 
+import json
 import requests
 from config import ANKI_CONNECT_URL, DEFAULT_MODEL_NAME
 
