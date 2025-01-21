@@ -87,9 +87,6 @@ def import_to_anki(json_file_path):
     Each card's 'deck-name' becomes the Anki deck name.
     'name' is Front, 'content' is Back', as a basic example.
 
-    This version:
-    1) 事前にモデル(「Basic」)とデッキを作成済みと仮定
-    2) canAddNotes で重複ノートをスキップ
     """
     ANKI_CONNECT_URL = "http://localhost:8765"
     MODEL_NAME = "Basic"
@@ -102,8 +99,8 @@ def import_to_anki(json_file_path):
     notes_for_anki = []
     for card in mochi_cards:
         deck_name = card.get("deck-name", "Mochi Imported")
-        front_text = card.get("name", "")
-        back_text = card.get("content", "")
+        front_text = card.get("name", "").split("\n---\n")[0]
+        back_text = card.get("content", "").split("\n---\n")[1]
 
         note = {
             "deckName": deck_name,  # 事前に createDeck などで作成済み
