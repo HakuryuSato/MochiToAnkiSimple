@@ -5,7 +5,7 @@ import requests
 from get_all_mochi_cards import get_deck_list, get_all_cards_async
 from export_json import create_json_filename, write_cards_to_json
 from export_deck_csv import export_deck_csv
-from import_to_anki import import_with_anki_connect
+from import_to_anki import import_to_anki
 
 
 def main():
@@ -33,7 +33,7 @@ def main():
         export_deck_csv(json_file_name)
 
         deck_directory = "output/deck"
-        import_with_anki_connect(deck_directory, model_name="mochi_cards")
+        import_to_anki(deck_directory, model_name="mochi_cards")
 
     except requests.exceptions.RequestException as e:
         print(f"An error has occurred while fetching from Mochi: {e}")

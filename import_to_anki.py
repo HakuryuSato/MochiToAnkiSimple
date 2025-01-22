@@ -1,7 +1,13 @@
 import os
 import requests
 
-def import_with_anki_connect(deck_directory: str, model_name: str = "mochi_cards") -> None:
+
+def import_to_anki(deck_directory: str, model_name: str = "mochi_cards") -> None:
+    """
+    指定されたディレクトリにあるCSVファイルをAnkiにインポートする。
+    - 20件単位でバッチ処理を行う。
+    - バッチ処理でエラーが発生した場合、そのバッチ内を1件ずつチェックしてインポート。
+    """
     if not os.path.exists(deck_directory):
         print(f"[ERROR] Directory not found: {deck_directory}")
         return
@@ -29,7 +35,7 @@ def import_with_anki_connect(deck_directory: str, model_name: str = "mochi_cards
                     "deckName": deck_name,
                     "modelName": model_name,
                     "fields": {"Front": front, "Back": back},
-                    "tags": []
+                    "tags": [],
                 }
                 notes.append(note)
 
@@ -37,19 +43,43 @@ def import_with_anki_connect(deck_directory: str, model_name: str = "mochi_cards
             print(f"[INFO] No valid notes found in {file_name}, skipping.")
             continue
 
-        # バッチ処理: 20件ずつインポート
+        # バッチ処理: 20件ずつ
         for i in range(0, len(notes), 20):
-            batch = notes[i:i+20]
-            payload = {
-                "action": "addNotes",
-                "version": 6,
-                "params": {"notes": batch}
-            }
+            batch = notes[i : i + 20]
+            payload = {"action": "addNotes", "version": 6, "params": {"notes": batch}}
+
             try:
                 response = requests.post("http://127.0.0.1:8765", json=payload).json()
                 if response.get("error"):
-                    print(f"[ERROR] Failed to import batch in deck '{deck_name}': {response['error']}")
+                    print(
+                        f"[ERROR] Failed to import batch in deck '{deck_name}': {response['error']}"
+                    )
+                    # バッチ内を1件ずつチェック
+                    for note in batch:
+                        single_payload = {
+                            "action": "addNotes",
+                            "version": 6,
+                            "params": {"notes": [note]},
+                        }
+                        try:
+                            single_response = requests.post(
+                                "http://127.0.0.1:8765", json=single_payload
+                            ).json()
+                            if single_response.get("error"):
+                                print(
+                                    f"[ERROR] Failed to import note: {note['fields']['Front']} - {single_response['error']}"
+                                )
+                            else:
+                                print(
+                                    f"[INFO] Successfully imported note: {note['fields']['Front']}"
+                                )
+                        except Exception as e:
+                            print(
+                                f"[ERROR] Failed to import note: {note['fields']['Front']} - {e}"
+                            )
                 else:
-                    print(f"[INFO] Imported {len(batch)} notes into deck '{deck_name}'.")
+                    print(
+                        f"[INFO] Imported {len(batch)} notes into deck '{deck_name}'."
+                    )
             except Exception as e:
                 print(f"[ERROR] Failed to import batch in deck '{deck_name}': {e}")
