@@ -99,7 +99,7 @@ def import_with_anki_connect(deck_directory: str, model_name: str = "mochi_cards
         return
 
     for file_name in os.listdir(deck_directory):
-        if not file_name.endswith(".tsv"):
+        if not file_name.endswith(".csv"):
             continue
 
         deck_name = os.path.splitext(file_name)[0]
