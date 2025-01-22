@@ -1,17 +1,24 @@
 import os
 import requests
 
+# main function
 def import_to_anki(deck_directory: str) -> None:
+
     model_name = "mochi_cards"
+    BATCH_SIZE = 50
+
     if not create_model_if_not_exists(model_name):
         print(f"[ERROR] Cannot proceed without model '{model_name}'.")
         return
+    
     if not os.path.exists(deck_directory):
         print(f"[ERROR] Directory not found: {deck_directory}")
         return
+    
     all_notes = open_deck_csv_files(deck_directory, model_name)
+
+
     for deck_name, notes in all_notes.items():
-        BATCH_SIZE = 50
         for i in range(0, len(notes), BATCH_SIZE):
             batch = notes[i : i + BATCH_SIZE]
             handle_import(batch, deck_name, batch_start=i)
@@ -121,7 +128,13 @@ def handle_import(items, deck_name, batch_start, is_batch=True):
                 for item in items:
                     handle_import([item], deck_name, batch_start=0, is_batch=False)
             else:
-                print(f"[ERROR] Failed to import note: {items[0]['fields']['Front']} - {response['error']}")
+                error_message = response['error']
+                if "duplicate" in error_message:
+                    print(f"[ERROR] Note is a duplicate: {items[0]['fields']['Front']}")
+                elif "empty" in error_message:
+                    print(f"[ERROR] Note is empty: {items[0]['fields']['Front']}")
+                else:
+                    print(f"[ERROR] Failed to import note: {items[0]['fields']['Front']} - {error_message}")
         else:
             if is_batch:
                 print(f"[INFO] Successfully imported {len(items)} notes (batch {batch_start + 1} to {batch_start + len(items)}) into deck '{deck_name}'.")
@@ -132,6 +145,7 @@ def handle_import(items, deck_name, batch_start, is_batch=True):
             print(f"[ERROR] Failed to import batch ({batch_start + 1} to {batch_start + len(items)}) in deck '{deck_name}': {e}")
         else:
             print(f"[ERROR] Failed to import note: {items[0]['fields']['Front']} - {e}")
+
 
 def create_payload(action, version, notes):
     return {

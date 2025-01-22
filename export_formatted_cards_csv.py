@@ -4,6 +4,7 @@ import json
 import re
 from collections import defaultdict
 
+
 def format_text(text: str) -> str:
     """
     テキストをフォーマットする:
@@ -11,13 +12,16 @@ def format_text(text: str) -> str:
     - `,` を半角スペースに置換
     - `![...](...)` を削除
     """
+    text = text.strip()
     text = text.replace("\n", "<br>")
     text = text.replace(",", " ")
     text = re.sub(r"!\[.*?\]\(.*?\)", "", text)  # `![...]` を削除
     return text.strip()
 
+
 def sanitize_filename(filename: str) -> str:
-    return re.sub(r'[\\/:*?"<>|]', '_', filename)
+    return re.sub(r'[\\/:*?"<>|]', "_", filename)
+
 
 def export_deck_csv(json_file_path: str) -> None:
     with open(json_file_path, "r", encoding="utf-8") as f:
@@ -30,26 +34,25 @@ def export_deck_csv(json_file_path: str) -> None:
     skipped_count = 0
 
     for index, card in enumerate(mochi_cards):
-        content_value = card.get("content", "")
-
-        if not content_value:
-            fallback = card.get("fields", {}).get("name", {}).get("value", "")
-            content_value = fallback
+        content_value = card.get("content", "") or card.get("fields", {}).get(
+            "name", {}
+        ).get("value", "")
 
         if not content_value:
             skipped_count += 1
             continue
 
-        parts = content_value.split("\n---\n")
-        front_text = parts[0].strip() if len(parts) > 0 else "(No content)"
-        back_text = parts[1].strip() if len(parts) > 1 else "(No content)"
+        front_text, back_text = content_value.split("\n---\n")
 
+        # format
         front_text = format_text(front_text)
         back_text = format_text(back_text)
 
-        if front_text == "(No content)" or back_text == "(No content)":
+        if not front_text or not back_text:
             skipped_count += 1
-            print(f"[INFO] Skipping invalid card at index {index}: Front='{front_text}', Back='{back_text}'")
+            print(
+                f"[INFO] Skipping invalid card at index {index}: Front='{front_text}', Back='{back_text}'"
+            )
             continue
 
         deck_name = card.get("deck-name", "other")
