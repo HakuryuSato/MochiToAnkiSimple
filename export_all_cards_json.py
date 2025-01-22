@@ -4,12 +4,13 @@ import json
 import datetime
 
 
-def create_json_filename(prefix="mochi_cards_full_data"):
+def create_json_file(prefix="mochi_cards_full_data"):
     """
     Creates a JSON filename with the current date-time appended.
     """
+    dir_name = "output"
     now_str = datetime.datetime.now().strftime("%Y%m%d%H%M")
-    return f"{prefix}_{now_str}.json"
+    return f"{dir_name}/{prefix}_{now_str}.json"
 
 
 def write_cards_to_json(file_name, decks, all_cards):
