@@ -42,11 +42,15 @@ def export_deck_csv(json_file_path: str) -> None:
             skipped_count += 1
             continue
 
-        front_text, back_text = content_value.split("\n---\n")
+        split_content = content_value.split("\n---\n")
+
+        if len(split_content) < 2:
+            skipped_count += 1
+            continue
 
         # format
-        front_text = format_text(front_text)
-        back_text = format_text(back_text)
+        front_text = format_text(split_content[0])
+        back_text = format_text(split_content[1])
 
         if not front_text or not back_text:
             skipped_count += 1
