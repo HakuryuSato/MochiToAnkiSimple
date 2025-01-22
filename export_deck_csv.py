@@ -9,10 +9,12 @@ def format_text(text: str) -> str:
     テキストをフォーマットする:
     - 改行を <br> に変換
     - `,` を半角スペースに置換
+    - `![...](...)` を削除
     """
     text = text.replace("\n", "<br>")
     text = text.replace(",", " ")
-    return text
+    text = re.sub(r"!\[.*?\]\(.*?\)", "", text)  # `![...]` を削除
+    return text.strip()
 
 def sanitize_filename(filename: str) -> str:
     return re.sub(r'[\\/:*?"<>|]', '_', filename)
@@ -45,7 +47,7 @@ def export_deck_csv(json_file_path: str) -> None:
         front_text = format_text(front_text)
         back_text = format_text(back_text)
 
-        if front_text == "(No content)" or back_text == "(No content)" or front_text == "<br>---":
+        if front_text == "(No content)" or back_text == "(No content)":
             skipped_count += 1
             print(f"[INFO] Skipping invalid card at index {index}: Front='{front_text}', Back='{back_text}'")
             continue
@@ -71,7 +73,3 @@ def export_deck_csv(json_file_path: str) -> None:
         print(f"[DEBUG] Finished writing deck '{deck_name}'")
 
     print(f"[INFO] Skipped {skipped_count} invalid cards.")
-
-
-if __name__ == "__main__":
-    pass
