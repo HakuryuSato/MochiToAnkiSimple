@@ -1,57 +1,23 @@
-# Mochi to Anki Converter
+# Mochi to Anki Simple
 
-MochiカードからAnkiへカードをインポートするためのPythonスクリプト。
+A Python script for importing cards from Mochi to Anki.
 
-## 機能
+## 前提
+Mochi APIを使用するためproプランへサブスクが必要
 
-- Mochi Cards APIからデッキとカードを取得
-- カード情報をJSONファイルに保存
-- AnkiConnectを使用してAnkiへカードをインポート
+## 使い方
+1. MochiからAPIキー取得(サブスクが必要)し、.envにMOCHI_API_KEY="あなたのAPIKEY"の形式で記述
+2. Ankiをインストールし、Anki Connectを追加、Ankiを起動しておく
+3. main.pyを実行
 
-## 必要条件
 
-- Python 3.7以上
-- Anki 2.1.x
-- [AnkiConnect](https://ankiweb.net/shared/info/2055492159) アドオン
-- Mochi Cards API キー
+## スクリプトの処理
+1.Mochiから全デッキ取得
+2.Mochiから全カード情報を取得し
+3.取得したカード情報をjsonへ一時保存
+4.Anki用にcsvに変換（問題,解答 の形式で、デッキ名.csvで保存）
+5.ankiへデッキ名、問題、解答の情報を書き込む
 
-## セットアップ
-
-1. 必要なパッケージをインストール:
-```bash
-pip install -r requirements.txt
-```
-
-2. `.env`ファイルを作成し、Mochi Cards APIキーを設定:
-```
-MOCHI_API_KEY=your_api_key_here
-```
-
-3. Ankiを起動し、AnkiConnectアドオンがインストールされていることを確認
-
-## 使用方法
-
-1. Ankiを起動した状態で以下のコマンドを実行:
-```bash
-python main.py
-```
-
-2. スクリプトは以下の処理を行います:
-   - Mochiからデッキ一覧を取得
-   - 全てのカードを取得
-   - カード情報をJSONファイルに保存
-   - AnkiConnectを使用してAnkiへカードをインポート
 
 ## ファイル構成
 
-- `main.py`: メインの実行ファイル
-- `config.py`: 設定と定数
-- `mochi_api.py`: Mochi Cards APIとの通信
-- `json_handler.py`: JSONファイルの操作
-- `anki_connect.py`: AnkiConnectとの通信
-
-## 注意事項
-
-- Ankiは実行中である必要があります
-- AnkiConnectアドオンがインストールされている必要があります
-- 有効なMochi Cards APIキーが必要です
