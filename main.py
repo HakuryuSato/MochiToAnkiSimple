@@ -4,7 +4,8 @@ import asyncio
 import requests
 from mochi_api import get_deck_list, get_all_cards_async
 from json_handler import create_json_filename, write_cards_to_json
-from anki_connect import export_to_anki_tsv
+from export_to_anki_tsv import export_to_anki_tsv
+from anki_importer import import_with_anki_connect
 
 
 def main():
@@ -28,8 +29,11 @@ def main():
         # json_file_name = create_json_filename()
         # write_cards_to_json(json_file_name, decks, all_cards)
 
-        json_file_name="output/mochi_cards_full_data_202501212349.json"
-        export_to_anki_tsv(json_file_name)
+        # json_file_name = "output/mochi_cards_full_data_202501212349.json"
+        # export_to_anki_tsv(json_file_name)
+
+        deck_directory = "output/deck"
+        import_with_anki_connect(deck_directory, model_name="mochi_cards")
 
     except requests.exceptions.RequestException as e:
         print(f"An error has occurred while fetching from Mochi: {e}")
