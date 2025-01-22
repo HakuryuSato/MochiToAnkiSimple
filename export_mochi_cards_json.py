@@ -2,6 +2,7 @@
 
 import json
 import datetime
+import os
 
 
 def create_json_file(prefix="mochi_cards_full_data"):
@@ -18,6 +19,9 @@ def write_cards_to_json(file_name, decks, all_cards):
     Writes card data to a JSON file. Additionally adds "deck-name" to each card
     by looking up the corresponding deck ID in the provided decks list.
     """
+    # ディレクトリが存在しない場合は作成
+    os.makedirs(os.path.dirname(file_name), exist_ok=True)
+
     # デッキID -> デッキ名 の辞書を作成
     deck_dict = {deck["id"]: deck["name"] for deck in decks}
 
